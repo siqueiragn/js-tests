@@ -1,17 +1,9 @@
-$(document).ready(function(){
 
 
-
-$("#boxEsquerda").mousemove(function(e){ 
-
- $("#raqueteEsquerda").css({"top": e.pageY-50}); // tempo da velocidade
+$(document).keypress(function(event){
+  //alert(String.fromCharCode(event.which)); 
+  if(String.fromCharCode(event.which)=='w')
+  $("#raqueteEsquerda").css({"margin-top": -15});
 });
- 
-$("#boxDireita").mousemove(function(e){
-	
-	$("#raqueteDireita").css({"top": e.pageY-50});
-	
 
-	});
 	
-});
