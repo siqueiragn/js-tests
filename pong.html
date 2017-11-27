@@ -1,18 +1,10 @@
 <!doctype html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<title>Pong</title>
-	<style>
-	
-	</style>
-</head>
-<body>
+<html>
+<head><title>Ping Pong</title></head><body>
 <script>
 var
 WIDTH  = window.innerWidth-20,
 HEIGHT = window.innerHeight-20,
-pi = Math.PI,
 canvas,
 ctx,
 keystate,
@@ -21,6 +13,7 @@ player = {
 	y: null,
 	width:  window.innerWidth*0.02,
 	height: window.innerHeight*0.15,
+	point: 0,
 	update: function() {
 		if (keystate[87]) this.y -= window.innerHeight*0.007;
 		if (keystate[83]) this.y += window.innerHeight*0.007;
@@ -30,14 +23,11 @@ player = {
 		ctx.fillRect(this.x, this.y, this.width, this.height);
 	}
 },
-/**
- * The ai paddle
- * 
- * @type {Object}
- */
+
 player2 = {
 	x: null,
 	y: null,
+	point: -1,
 	width:  window.innerWidth*0.02,
 	height: window.innerHeight*0.15,
 	update: function() {
@@ -53,74 +43,47 @@ player2 = {
 ball = {
 	x:   null,
 	y:   null,
-	vel: null,
+	v: null,
 	side:  window.innerWidth*0.009,
 	speed: window.innerWidth*0.005,
-	/**
-	 * Serves the ball towards the specified side
-	 * 
-	 * @param  {number} side 1 right
-	 *                       -1 left
-	 */
-	serve: function(side) {
-		// set the x and y position
+	redirect: function(side) {
 		var r = Math.random();
-		this.x = side===1 ? player.x+player.width : player2.x - this.side;
+		if(side===1) player2.point++; 
+		else player.point++;
+		this.x = WIDTH/2;
 		this.y = (HEIGHT - this.side)*r;
-		// calculate out-angle, higher/lower on the y-axis =>
-		// steeper angle
-		var phi = 0.1*pi*(1 - 2*r);
-		// set velocity direction and magnitude
-		this.vel = {
+		var phi = 0.1*Math.PI*(1 - 2*r);
+		this.v = {
 			x: side*this.speed*Math.cos(phi),
 			y: this.speed*Math.sin(phi)
 		}
 	},
-	/**
-	 * Update the ball position and keep it within the canvas
-	 */
 	update: function() {
-		// update position with current velocity
-		this.x += this.vel.x;
-		this.y += this.vel.y;
-		// check if out of the canvas in the y direction
+		this.x += this.v.x;
+		this.y += this.v.y;
 		if (0 > this.y || this.y+this.side > HEIGHT) {
-			// calculate and add the right offset, i.e. how far
-			// inside of the canvas the ball is
-			var offset = this.vel.y < 0 ? 0 - this.y : HEIGHT - (this.y+this.side);
+	
+			var offset = this.v.y < 0 ? 0 - this.y : HEIGHT - (this.y+this.side);
 			this.y += 2*offset;
-			// mirror the y velocity
-			this.vel.y *= -1;
+			this.v.y *= -1;
 		}
-		// helper function to check intesectiont between two
-		// axis aligned bounding boxex (AABB)
-		var AABBIntersect = function(ax, ay, aw, ah, bx, by, bw, bh) {
+		var collisionDetect = function(ax, ay, aw, ah, bx, by, bw, bh) {
 			return ax < bx+bw && ay < by+bh && bx < ax+aw && by < ay+ah;
 		};
-		// check againts target paddle to check collision in x
-		// direction
-		var pdle = this.vel.x < 0 ? player : player2;
-		if (AABBIntersect(pdle.x, pdle.y, pdle.width, pdle.height,
+		var paddle = this.v.x < 0 ? player : player2;
+		if (collisionDetect(paddle.x, paddle.y, paddle.width, paddle.height,
 				this.x, this.y, this.side, this.side)
 		) {	
-			// set the x position and calculate reflection angle
-			this.x = pdle===player ? player.x+player.width : player2.x - this.side;
-			var n = (this.y+this.side - pdle.y)/(pdle.height+this.side);
-			var phi = 0.25*pi*(2*n - 1); // pi/4 = 45
-			// calculate smash value and update velocity
-			var smash = Math.abs(phi) > 0.2*pi ? 1.5 : 1;
-			this.vel.x = smash*(pdle===player ? 1 : -1)*this.speed*Math.cos(phi);
-			this.vel.y = smash*this.speed*Math.sin(phi);
+			this.x = paddle===player ? player.x+player.width : player2.x - this.side;
+			var phi = 0.25*Math.PI*(2*(this.y+this.side - paddle.y)/(paddle.height+this.side) - 1); 
+			this.v.x = (paddle===player ? 1 : -1)*this.speed*Math.cos(phi);
+			this.v.y = this.speed*Math.sin(phi);
 		}
-		// reset the ball when ball outside of the canvas in the
-		// x direction
 		if (0 > this.x+this.side || this.x > WIDTH) {
-			this.serve(pdle===player ? 1 : -1);
+			this.redirect(paddle===player ? 1 : -1);
 		}
 	},
-	/**
-	 * Draw the ball to the canvas
-	 */
+	// BOLA
 	draw: function() {
 	ctx.beginPath();
 		ctx.arc(this.x, this.y, window.innerHeight*0.01, 0, 2 * Math.PI);
@@ -129,11 +92,8 @@ ball = {
 	}
 
 };
-/**
- * Starts the game
- */
+
 function main() {
-	// create, initiate and append game canvas
 	canvas = document.createElement("canvas");
 	canvas.width = WIDTH;
 	canvas.height = HEIGHT;
@@ -141,14 +101,14 @@ function main() {
 	document.body.appendChild(canvas);
 	keystate = {};
 
-	document.addEventListener("keydown", function(evt) {
-		keystate[evt.keyCode] = true;
+	document.addEventListener("keydown", function(e) {
+		keystate[e.keyCode] = true;
 	});
-	document.addEventListener("keyup", function(evt) {
-		delete keystate[evt.keyCode];
+	document.addEventListener("keyup", function(e) {
+		delete keystate[e.keyCode];
 	});
-	init(); // initiate game objects
-	// game loop function
+	init();
+
 	var loop = function() {
 		update();
 		draw();
@@ -162,7 +122,7 @@ function init() {
 	player.y = (HEIGHT - player.height)/2;
 	player2.x = WIDTH - (player.width + player2.width);
 	player2.y = (HEIGHT - player2.height)/2;
-	ball.serve(1);
+	ball.redirect(1);
 }
 
 function update() {
@@ -174,7 +134,7 @@ function update() {
 function draw() {
 	ctx.fillRect(0, 0, WIDTH, HEIGHT);
 	ctx.save();
-	ctx.fillStyle = "#fff";
+	ctx.fillStyle = "white";
 	ball.draw();
 	player.draw();
 	player2.draw();
@@ -182,9 +142,19 @@ function draw() {
 	var x = (WIDTH - w)*0.5;
 	var y = 0;
 	ctx.fillRect(x, 1 , window.innerWidth*0.007, window.innerHeight);
+	
+	ctx.fillStyle = "white";
+	ctx.font = window.innerHeight*0.05+"px Arial";
+	ctx.fillText(player.point,x*0.5,window.innerHeight*0.07);
+	
+	ctx.fillStyle = "white";
+	ctx.font = window.innerHeight*0.05+"px Arial";
+	ctx.fillText(player2.point,x*1.5,window.innerHeight*0.07);
+	
 	ctx.restore();
+	
 }
-// start and run the game
+
 main();
 </script>
 </body>
