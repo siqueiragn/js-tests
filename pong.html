@@ -5,9 +5,7 @@
 var
 WIDTH  = window.innerWidth-20,
 HEIGHT = window.innerHeight-20,
-canvas,
-ctx,
-keystate,
+canvas,ctx,keystate,
 player = {
 	x: null,
 	y: null,
@@ -48,8 +46,11 @@ ball = {
 	speed: window.innerWidth*0.005,
 	redirect: function(side) {
 		var r = Math.random();
-		if(side===1) player2.point++; 
+		
+		if(side===1) 
+		player2.point++; 
 		else player.point++;
+		
 		this.x = WIDTH/2;
 		this.y = (HEIGHT - this.side)*r;
 		var phi = 0.1*Math.PI*(1 - 2*r);
@@ -62,19 +63,28 @@ ball = {
 		this.x += this.v.x;
 		this.y += this.v.y;
 		if (0 > this.y || this.y+this.side > HEIGHT) {
-	
-			var offset = this.v.y < 0 ? 0 - this.y : HEIGHT - (this.y+this.side);
+				if(this.v.y < 0)
+			offset = -this.y;
+				else
+			offset = HEIGHT - (this.y+this.side);
+			
 			this.y += 2*offset;
 			this.v.y *= -1;
 		}
-		var collisionDetect = function(ax, ay, aw, ah, bx, by, bw, bh) {
-			return ax < bx+bw && ay < by+bh && bx < ax+aw && by < ay+ah;
+		var collisionDetect = function(ax,ay,aw,ah,bx,by,bw,bh) {
+			return ax<bx+bw && ay<by+bh && bx<ax+aw && by<ay+ah;
 		};
-		var paddle = this.v.x < 0 ? player : player2;
-		if (collisionDetect(paddle.x, paddle.y, paddle.width, paddle.height,
-				this.x, this.y, this.side, this.side)
-		) {	
-			this.x = paddle===player ? player.x+player.width : player2.x - this.side;
+		if (this.v.x<0)
+		var paddle = player;
+		else 
+		var paddle = player2;
+	
+		if(collisionDetect(paddle.x, paddle.y, paddle.width, paddle.height,this.x, this.y, this.side, this.side)) {	
+			if(paddle === player)
+				this.x = player.x+player.width;
+			else
+				this.x = player2.x - this.side;
+			
 			var phi = 0.25*Math.PI*(2*(this.y+this.side - paddle.y)/(paddle.height+this.side) - 1); 
 			this.v.x = (paddle===player ? 1 : -1)*this.speed*Math.cos(phi);
 			this.v.y = this.speed*Math.sin(phi);
@@ -83,12 +93,12 @@ ball = {
 			this.redirect(paddle===player ? 1 : -1);
 		}
 	},
-	// BOLA
+
 	draw: function() {
 	ctx.beginPath();
 		ctx.arc(this.x, this.y, window.innerHeight*0.01, 0, 2 * Math.PI);
 		ctx.fill();
-		ctx.stroke();
+		
 	}
 
 };
@@ -107,29 +117,26 @@ function main() {
 	document.addEventListener("keyup", function(e) {
 		delete keystate[e.keyCode];
 	});
-	init();
-
-	var loop = function() {
-		update();
-		draw();
-		window.requestAnimationFrame(loop, canvas);
-	};
-	window.requestAnimationFrame(loop, canvas);
-}
-
-function init() {
+	
 	player.x = player.width;
 	player.y = (HEIGHT - player.height)/2;
 	player2.x = WIDTH - (player.width + player2.width);
 	player2.y = (HEIGHT - player2.height)/2;
 	ball.redirect(1);
-}
 
-function update() {
-	ball.update();
-	player.update();
-	player2.update();
-}
+	var loop = function() {
+		ball.update();
+		player.update();
+		player2.update();
+		draw();
+				window.requestAnimationFrame(loop, canvas);
+
+	};
+	window.requestAnimationFrame(loop, canvas);
+
+	}
+
+
 
 function draw() {
 	ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -138,9 +145,8 @@ function draw() {
 	ball.draw();
 	player.draw();
 	player2.draw();
-	var w = 4;
-	var x = (WIDTH - w)*0.5;
-	var y = 0;
+	var x = (WIDTH - 4)*0.5;
+	
 	ctx.fillRect(x, 1 , window.innerWidth*0.007, window.innerHeight);
 	
 	ctx.fillStyle = "white";
