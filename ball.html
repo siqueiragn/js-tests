@@ -1,0 +1,53 @@
+
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+
+<style>
+	div {
+	border: 1px solid black;
+	width: 100px;
+	height: 100px;
+	text-align: center;
+	float:left;
+	background-color: red;
+	margin-left: 5px;
+    border-radius: 90px;
+	}
+
+    body{
+        background-color: black;
+    }
+</style>
+<body>
+    <div id="divMover"></div>
+<script>
+$(document).ready(function (){
+    var y = 0, x = 0;
+    document.addEventListener('keydown', function(e){
+    //alert(e.keyCode);
+        
+        if(e.keyCode==40){
+            y = y+10;
+            $("#divMover").animate({marginTop: y},1);
+        }
+        if(e.keyCode==38){
+            y = y-10;
+            $("#divMover").animate({marginTop: y},1);
+        }
+        
+        if(e.keyCode==37){
+            x = x-10;
+            $("#divMover").animate({marginLeft: x},1);
+        }
+         if(e.keyCode==39){
+            x = x+10;
+            $("#divMover").animate({marginLeft: x},1);
+        }
+    });
+    
+    $("#divMover").on('mouseenter', function() {$(this).css("background-color", 'black'); $('body').css("background-color",'red')});
+    $("#divMover").on('mouseleave', function() {$(this).css("background-color", 'red'); $('body').css("background-color",'black')});
+    
+});
+</script>
+    </body>
